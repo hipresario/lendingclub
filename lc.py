@@ -1,6 +1,7 @@
 import pandas as pd
 import os
 from sklearn.model_selection import StratifiedShuffleSplit
+import  math
 
 def cleanData(num):
     src = 'LoanStats_2016Q' + num+ '.csv'
@@ -43,26 +44,29 @@ SUB_GRADE_VALUE = [1, 2, 3, 4, 5,
                    31, 32, 33, 34, 35
                    ]
 APPLICATION_TYPE = [ 'INDIVIDUAL', 'JOINT', 'DIRECT_PAY']
-APPLICATION_TYPE_VALUE = [1, 2, 3]
+APPLICATION_TYPE_VALUE = [0, 1, 2]
 
-YEARS = ['n/a', '< 1 year', '1 year', '2 years', '3 years', '4 years', '5 years', '6 years', '7 years',
+YEARS = ['', 'n/a', '< 1 year', '1 year', '2 years', '3 years', '4 years', '5 years', '6 years', '7 years',
          '8 years', '9 years', '10 years', '10+ years']
-YEARS_VALUE = [0, 0.5, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10]
+YEARS_VALUE = [0, 0, 0.5, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10]
 
 LOAN_STATUS = ['Default', 'Charged Off', 'In Grace Period', 'Late (16-30 days)', 'Late (31-120 days)', 'Fully Paid']
 LOAN_STATUS_VALUE = ['BAD', 'BAD', 'BAD', 'BAD', 'BAD', 'GOOD']
 
 
 def p2f(x):
+    if x == 'n/a':
+        return 0
     x = x.strip('%')
     if not x:
         return 0
     return float(x)/100
 
+
 def selectData(num):
     src = '2016Q' + num + '.csv'
     df = pd.read_csv(src, encoding='latin-1',  skipinitialspace=True, usecols=fields,
-                     na_values = {'n/a', ''},
+                     na_values = {'n/a','na', ''},
                     converters={'int_rate':p2f, 'revol_util': p2f})
 
     df['term'].replace(
@@ -114,18 +118,34 @@ def selectData(num):
      )
     df.to_csv('2016Q' + num + '_ALL.csv', index=False)
 
+def combineData():
+    srcs = ['1', '2', '3', '4']
+    frames = []
+    for src in srcs:
+        src = '2016Q' + src + '_All.csv'
+        df = pd.read_csv(src, encoding='latin-1')
+        frames.append(df)
+
+    results = pd.concat(frames)
+    results.to_csv('2016_LC.csv', index=False)
+
 
 def main():
     #clean data
     srcs = ['1', '2', '3', '4']
-    for src in srcs:
-        #cleanData(src)
-        selectData(src)
-    #statistics()
+    # for src in srcs:
+    #     # cleanData(src)
+    #     selectData(src)
+    # #statistics()
+    #combineData()
 
+
+
+    # df = pd.read_csv('2016Q1_All.csv', encoding='latin-1')
+    # fixEmployment(df)
 
 def statistics():
-    q1 = pd.read_csv('2016Q1.csv', encoding='latin-1')
+    q1 = pd.read_csv('2016Q1_All.csv', encoding='latin-1')
     print(q1.describe())
 
 
