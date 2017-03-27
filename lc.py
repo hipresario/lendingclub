@@ -44,7 +44,7 @@ SUB_GRADE_VALUE = [1, 2, 3, 4, 5,
                    31, 32, 33, 34, 35
                    ]
 APPLICATION_TYPE = [ 'INDIVIDUAL', 'JOINT', 'DIRECT_PAY']
-APPLICATION_TYPE_VALUE = [0, 1, 2]
+APPLICATION_TYPE_VALUE = [1, 2, 3]
 
 YEARS = ['', 'n/a', '< 1 year', '1 year', '2 years', '3 years', '4 years', '5 years', '6 years', '7 years',
          '8 years', '9 years', '10 years', '10+ years']
@@ -129,6 +129,26 @@ def combineData():
     results = pd.concat(frames)
     results.to_csv('2016_LC.csv', index=False)
 
+def splitData():
+    """Training, Validation, Test 6:2:2"""
+    all = pd.read_csv('2016_LC.csv', encoding='latin-1')
+    X = (all.drop(['loan_status'], axis=1))
+    y = all['loan_status']
+
+    sss = StratifiedShuffleSplit(test_size=0.2)
+    for train_index, test_index in sss.split(X, y):
+        X_train, X_test = X.iloc[train_index], X.iloc[test_index]
+        y_train, y_test = y[train_index], y[test_index]
+
+    X_train = X_train.copy()
+    X_train['loan_status'] = y_train
+
+    X_test = X_test.copy()
+    X_test['loan_status'] = y_test
+
+    X_train.to_csv('2016_train.csv', index=False)
+    X_test.to_csv('2016_test.csv', index=False)
+
 
 def main():
     #clean data
@@ -138,7 +158,7 @@ def main():
     #     selectData(src)
     # #statistics()
     #combineData()
-
+    splitData()
 
 
     # df = pd.read_csv('2016Q1_All.csv', encoding='latin-1')
