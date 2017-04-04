@@ -11,18 +11,18 @@ def cleanData(src):
 fields = ['loan_amnt','int_rate','installment','sub_grade',
           'emp_length','home_ownership','annual_inc',
           'verification_status','loan_status',
-          'purpose','title','dti','delinq_2yrs',
+          'purpose','dti','delinq_2yrs',
           'earliest_cr_line','inq_last_6mths','open_acc',
           'revol_bal','revol_util','initial_list_status']
 
 HOME = ['MORTGAGE', 'RENT',  'OWN']
 HOME_VALUE = [1, 2, 3]
 
-PURPOSE = ['car', 'credit_card', 'debt_consolidation', 'home_improvement', 'house',
-            'major_purchase', 'medical', 'moving', 'renewable_energy', 'small_business',
-           'vacation', 'wedding', 'other'
-            ]
-PURPOSE_VALUE = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+# PURPOSE = ['car', 'credit_card', 'debt_consolidation', 'home_improvement', 'house',
+#             'major_purchase', 'medical', 'moving', 'renewable_energy', 'small_business',
+#            'vacation', 'wedding', 'other'
+#             ]
+# PURPOSE_VALUE = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
 
 SUB_GRADE = ['A1', 'A2', 'A3', 'A4', 'A5',
              'B1', 'B2', 'B3', 'B4', 'B5',
@@ -51,7 +51,7 @@ LOAN_STATUS_VALUE = ['BAD', 'BAD', 'BAD', 'BAD', 'BAD', 'GOOD']
 def fixYear(x):
     if not x or x == '':
         return 'n/a'
-    return  x;
+    return x;
 
 def p2f(x):
     if not x or x == 'n/a' or x == '':
@@ -59,16 +59,13 @@ def p2f(x):
     x = x.strip('%')
     return float(x)/100
 
-def titleLength(x):
-    return len(str(x))
-
 def selectData(src):
     df = pd.read_csv(src, encoding='latin-1',  skipinitialspace=True, usecols=fields,
                      na_values = {'n/a','na', ''},
                     converters={'int_rate':p2f,
                                 'revol_util': p2f,
                                 'emp_length': fixYear,
-                                'title': titleLength})
+                                })
 
     df['initial_list_status'].replace(
         to_replace=['w', 'f'],
@@ -91,34 +88,24 @@ def selectData(src):
         inplace=True
     )
 
-    # df['home_ownership'].replace(
-    #     to_replace=HOME,
-    #     value=HOME_VALUE,
-    #     inplace=True
-    # )
-    # df['purpose'].replace(
-    #     to_replace=PURPOSE,
-    #     value=PURPOSE_VALUE,
-    #     inplace=True
-    #  )
     df['sub_grade'].replace(
         to_replace=SUB_GRADE,
         value=SUB_GRADE_VALUE,
         inplace=True
     )
 
-    df.to_csv('loan_2010_12.csv', index=False)
+    df.to_csv('loan_2010_12_clean.csv', index=False)
 
-def combineData():
-    srcs = ['1', '2', '3', '4']
-    frames = []
-    for src in srcs:
-        src = '2016Q' + src + '_All.csv'
-        df = pd.read_csv(src, encoding='latin-1')
-        frames.append(df)
 
-    results = pd.concat(frames)
-    results.to_csv('2016_LC.csv', index=False)
+def createDummyVar():
+    df = pd.read_csv('loan_2010_12_clean.csv', encoding='latin-1')
+    df['installment_to_income'] = (12 * df['installment'])/ df['annual_inc']
+    df['revol_to_income'] = (12 * df['revol_bal']) / df['annual_inc']
+    df = (df.drop(['earliest_cr_line'], axis=1))
+    df = pd.get_dummies(df, prefix='home_', columns=['home_ownership'])
+    df = pd.get_dummies(df, prefix='purpose_', columns=['purpose'])
+
+    df.to_csv('loan_2010_12_with_dummy.csv', index=False)
 
 def splitData():
     """Training, Validation, Test 6:2:2"""
@@ -146,7 +133,8 @@ def main():
     #src = 'loan.csv'
     #cleanData(src)
     src = 'loan_clean.csv'
-    selectData(src)
+    #selectData(src)
+    createDummyVar()
     # #statistics()
     #combineData()
     #splitData()
