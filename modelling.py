@@ -57,7 +57,7 @@ def main():
     X_test = scaler.transform(X_test)
 
     #logistic regression
-    lr = LogisticRegression( class_weight='balanced', random_state = 10, C=0.5,
+    lr = LogisticRegression( class_weight='balanced', random_state = 10, C=1,
                              penalty='l2',dual = False,
                              solver = 'liblinear',n_jobs = -1
                              )
@@ -70,17 +70,17 @@ def main():
     test_pred = lr.predict(X_test)
     score = accuracy_score(y_test, test_pred)
     print(score)
-    c1 = confusion_matrix(y_test, test_pred, labels = ['GOOD', 'BAD'])
+    c1 = confusion_matrix(y_test, test_pred, labels = [1, 0])
     print(c1)
-    return
+
     # X_test['expected'] = y_test
     # X_test['predict'] = test_pred
     # X_test.to_csv('result.csv', index=False)
     #
 
     #random forest
-    rf = RandomForestClassifier(n_estimators=60, oob_score=True, criterion='gini', max_features=4,
-                                max_depth = 8,
+    rf = RandomForestClassifier(n_estimators=100, oob_score=True, criterion='gini',# max_features= 30,
+                                #max_depth = 10,
                                 n_jobs=-1, random_state=10, min_samples_leaf=1,
                                 class_weight='balanced', warm_start=False
                                 )
@@ -88,7 +88,7 @@ def main():
     print(rf.score(X_train, y_train))
     preds = rf.predict(X_test)
     score = accuracy_score(y_test, preds)
-    c2 =confusion_matrix(y_test, preds, labels=['GOOD', 'BAD'])
+    c2 =confusion_matrix(y_test, preds, labels=[1, 0])
     print(c2)
 
 if __name__ == '__main__':

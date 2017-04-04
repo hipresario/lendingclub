@@ -19,7 +19,7 @@ fields = ['loan_amnt','int_rate','installment','sub_grade',
           'verification_status','loan_status',
           'purpose','dti','delinq_2yrs',
           'earliest_cr_line','inq_last_6mths','open_acc',
-          'revol_bal','revol_util','initial_list_status']
+          'revol_bal','revol_util']
 
 # HOME = ['MORTGAGE', 'RENT',  'OWN']
 # HOME_VALUE = [1, 2, 3]
@@ -55,7 +55,7 @@ YEARS_VALUE = [0, 0, 0.5, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10]
 
 #prediction class conversion
 LOAN_STATUS = ['Default', 'Charged Off', 'In Grace Period', 'Late (16-30 days)', 'Late (31-120 days)', 'Fully Paid']
-LOAN_STATUS_VALUE = ['BAD', 'BAD', 'BAD', 'BAD', 'BAD', 'GOOD']
+LOAN_STATUS_VALUE = [0, 0, 0, 0, 0, 1]
 
 def logValue(row, label):
     return math.log10(row[label])
@@ -116,12 +116,6 @@ def selectData(src):
 
     df['credit_years'] = df.apply(calculateCreditYear, axis=1)
 
-    df['initial_list_status'].replace(
-        to_replace=['w', 'f'],
-        value=[1, 0],
-        inplace=True
-    )
-
     df['emp_length'].replace(
         to_replace=YEARS,
         value=YEARS_VALUE,
@@ -155,7 +149,7 @@ def createDummyVar():
     """
     df = pd.read_csv('loan_2010_12_clean.csv', encoding='latin-1')
     df['installment_to_income'] = (12 * df['installment'])/ df['annual_inc']
-    df['revol_to_income'] = (12 * df['revol_bal']) / df['annual_inc']
+    df['revol_to_income'] = (df['revol_bal']) / df['annual_inc']
     df = (df.drop(['earliest_cr_line'], axis=1))
     df = pd.get_dummies(df, prefix='home_', columns=['home_ownership'])
     df = pd.get_dummies(df, prefix='purpose_', columns=['purpose'])
