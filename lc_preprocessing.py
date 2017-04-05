@@ -156,6 +156,14 @@ def createDummyVar():
 
     df.to_csv('loan_2010_12_with_dummy.csv', index=False)
 
+def formatData():
+    df = pd.read_csv('loan_2010_12_clean.csv', encoding='latin-1')
+    df['installment_to_income'] = (12 * df['installment']) / df['annual_inc']
+    df['revol_to_income'] = (df['revol_bal']) / df['annual_inc']
+    df = (df.drop(['earliest_cr_line'], axis=1))
+    df.to_csv('loan_2010_12_without_dummy.csv', index=False)
+
+
 def splitData():
     """
     Training, Validation, Test 60%:20%:20%
@@ -185,20 +193,11 @@ def main():
     #cleanData(src)
     src = 'loan_clean.csv'
     selectData(src)
-    createDummyVar()
+    formatData()
+    #createDummyVar()
     # #statistics()
     #combineData()
     #splitData()
-
-
-    # df = pd.read_csv('2016Q1_All.csv', encoding='latin-1')
-    # fixEmployment(df)
-
-def statistics():
-    q1 = pd.read_csv('2016Q1_All.csv', encoding='latin-1')
-    print(q1.describe())
-
-
 
 if __name__ == '__main__':
     main()

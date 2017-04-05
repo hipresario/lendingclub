@@ -15,28 +15,8 @@ from sklearn.model_selection import cross_val_score
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import StratifiedKFold
 
-def output():
-    test = pd.read_csv('test_final.csv')
-    test = pd.DataFrame().assign(
-        Id=test['Id'],
-        Prediction=test['Prediction']
-    )
-    train = pd.read_csv('train.csv')
-    result = pd.DataFrame().assign(
-        Id=train['Id'],
-        Prediction=train['Prediction']
-    )
-    submit = pd.concat([test, result])
-    ans = submit.sort(['Id'], ascending=[1])
-    # print(ans)
-    pd.DataFrame().assign(
-        Id=ans['Id'],
-        Prediction=ans['Prediction']
-    ).to_csv('final_result.csv', index=False)
-
-def main():
+def logisticRegression():
     dropFields = ['loan_status', 'int_rate', 'annual_inc', 'revol_bal', 'installment']
     all = pd.read_csv('loan_2010_12_with_dummy.csv')
     X = (all.drop(dropFields, axis=1))
@@ -56,40 +36,60 @@ def main():
     X_train = scaler.transform(X_train)
     X_test = scaler.transform(X_test)
 
-    #logistic regression
-    lr = LogisticRegression( class_weight='balanced', random_state = 10, C=1,
-                             penalty='l2',dual = False,
-                             solver = 'liblinear',n_jobs = -1
-                             )
-    #
+    # logistic regression
+    lr = LogisticRegression(class_weight='balanced', random_state=10, C=1,
+                            penalty='l2', dual=False,
+                            solver='liblinear', n_jobs=-1
+                            )
     lr.fit(X_train, y_train)
-    scores = cross_val_score(lr, X_train, y_train, cv=4)
-    #print(lr.score(X_train, y_train))
+    scores = cross_val_score(lr, X_train, y_train, cv=5)
     print(lr.coef_)
     print(scores)
     test_pred = lr.predict(X_test)
     score = accuracy_score(y_test, test_pred)
     print(score)
-    c1 = confusion_matrix(y_test, test_pred, labels = [1, 0])
+    c1 = confusion_matrix(y_test, test_pred, labels=[1, 0])
     print(c1)
 
-    # X_test['expected'] = y_test
-    # X_test['predict'] = test_pred
-    # X_test.to_csv('result.csv', index=False)
-    #
+def randomForest():
+    dropFields = ['loan_status', 'int_rate', 'annual_inc', 'revol_bal', 'installment']
+    all = pd.read_csv('loan_2010_12_with_dummy.csv')
+    X = (all.drop(dropFields, axis=1))
+    y = all['loan_status']
 
-    #random forest
-    rf = RandomForestClassifier(n_estimators=100, oob_score=True, criterion='gini',# max_features= 30,
-                                #max_depth = 10,
+    # split training and test 80% : 20%
+    # training using 4-fold cross validation i.e. validation 20% of the total dataset
+    sss = StratifiedShuffleSplit(test_size=0.2)
+
+    for train_index, test_index in sss.split(X, y):
+        X_train, X_test = X.iloc[train_index], X.iloc[test_index]
+        y_train, y_test = y[train_index], y[test_index]
+
+    # scaler = StandardScaler()
+    # scaler.fit(X_train)
+    # # Now apply the transformations to the data:
+    # X_train = scaler.transform(X_train)
+    # X_test = scaler.transform(X_test)
+
+    # random forest
+    # use dataset without creating dummy variables
+    rf = RandomForestClassifier(n_estimators=50, oob_score=True, criterion='gini', max_features=8,
+                                max_depth=10,
                                 n_jobs=-1, random_state=10, min_samples_leaf=1,
                                 class_weight='balanced', warm_start=False
                                 )
-    rf.fit(X_train,y_train)
-    print(rf.score(X_train, y_train))
+    rf.fit(X_train, y_train)
+    scores = cross_val_score(rf, X_train, y_train, cv=5)
+    print(scores)
     preds = rf.predict(X_test)
     score = accuracy_score(y_test, preds)
-    c2 =confusion_matrix(y_test, preds, labels=[1, 0])
+    print(score)
+    c2 = confusion_matrix(y_test, preds, labels=[1, 0])
     print(c2)
+
+def main():
+    #logisticRegression()
+    randomForest()
 
 if __name__ == '__main__':
     main()
