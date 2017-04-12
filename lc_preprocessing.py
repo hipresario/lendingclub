@@ -1,6 +1,4 @@
 import pandas as pd
-import os
-from sklearn.model_selection import StratifiedShuffleSplit
 import math
 
 def cleanData(src):
@@ -11,24 +9,15 @@ def cleanData(src):
     """
     rawdata = pd.read_csv(src, encoding='latin-1')
     cleandata = rawdata[rawdata['loan_status'] != 'Current']
-    cleandata.to_csv('loan_clean.csv', index=False, encoding="latin-1" )
+    cleandata.to_csv('loan_clean.csv', index=False, encoding='latin-1' )
 
 #selected attributes for experiment
-fields = ['loan_amnt','int_rate','installment','sub_grade',
+fields = ['loan_amnt', 'installment','sub_grade',
           'emp_length','home_ownership','annual_inc',
-          'verification_status','loan_status',
+           'loan_status',
           'purpose','dti','delinq_2yrs',
           'earliest_cr_line','inq_last_6mths','open_acc',
           'revol_bal','revol_util']
-
-# HOME = ['MORTGAGE', 'RENT',  'OWN']
-# HOME_VALUE = [1, 2, 3]
-
-# PURPOSE = ['car', 'credit_card', 'debt_consolidation', 'home_improvement', 'house',
-#             'major_purchase', 'medical', 'moving', 'renewable_energy', 'small_business',
-#            'vacation', 'wedding', 'other'
-#             ]
-# PURPOSE_VALUE = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
 
 #convert grades to numericals
 SUB_GRADE = ['A1', 'A2', 'A3', 'A4', 'A5',
@@ -56,9 +45,6 @@ YEARS_VALUE = [0, 0, 0.5, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10]
 #prediction class conversion
 LOAN_STATUS = ['Default', 'Charged Off', 'In Grace Period', 'Late (16-30 days)', 'Late (31-120 days)', 'Fully Paid']
 LOAN_STATUS_VALUE = [0, 0, 0, 0, 0, 1]
-
-def logValue(row, label):
-    return math.log10(row[label])
 
 def fixYear(x):
     """
@@ -111,7 +97,6 @@ def selectData(src):
                     converters={'int_rate':p2f,
                                 'revol_util': p2f,
                                 'emp_length': fixYear
-
                                 })
 
     df['credit_years'] = df.apply(calculateCreditYear, axis=1)
@@ -119,12 +104,6 @@ def selectData(src):
     df['emp_length'].replace(
         to_replace=YEARS,
         value=YEARS_VALUE,
-        inplace=True
-    )
-
-    df['verification_status'].replace(
-        to_replace=['Source Verified', 'Verified', 'Not Verified'],
-        value=[0, 0, 1],
         inplace=True
     )
 
@@ -140,6 +119,8 @@ def selectData(src):
         inplace=True
     )
 
+
+
     df.to_csv('loan_2010_12_clean.csv', index=False)
 
 def createDummyVar():
@@ -148,56 +129,27 @@ def createDummyVar():
     :return:
     """
     df = pd.read_csv('loan_2010_12_clean.csv', encoding='latin-1')
+    df = (df.drop(['earliest_cr_line'], axis=1))
     df['installment_to_income'] = (12 * df['installment'])/ df['annual_inc']
     df['revol_to_income'] = (df['revol_bal']) / df['annual_inc']
-    df = (df.drop(['earliest_cr_line'], axis=1))
     df = pd.get_dummies(df, prefix='home_', columns=['home_ownership'])
     df = pd.get_dummies(df, prefix='purpose_', columns=['purpose'])
 
     df.to_csv('loan_2010_12_with_dummy.csv', index=False)
 
 def formatData():
-    df = pd.read_csv('loan_2010_12_clean.csv', encoding='latin-1')
-    df['installment_to_income'] = (12 * df['installment']) / df['annual_inc']
-    df['revol_to_income'] = (df['revol_bal']) / df['annual_inc']
-    df = (df.drop(['earliest_cr_line'], axis=1))
-    df.to_csv('loan_2010_12_without_dummy.csv', index=False)
-
-
-def splitData():
-    """
-    Training, Validation, Test 60%:20%:20%
-    """
-    all = pd.read_csv('loan_2010_12_with_dummy.csv', encoding='latin-1')
-    X = (all.drop(['loan_status'], axis=1))
-    y = all['loan_status']
-
-    sss = StratifiedShuffleSplit(test_size=0.2)
-    for train_index, test_index in sss.split(X, y):
-        X_train, X_test = X.iloc[train_index], X.iloc[test_index]
-        y_train, y_test = y[train_index], y[test_index]
-
-    X_train = X_train.copy()
-    X_train['loan_status'] = y_train
-
-    X_test = X_test.copy()
-    X_test['loan_status'] = y_test
-
-    X_train.to_csv('2016_train.csv', index=False)
-    X_test.to_csv('2016_test.csv', index=False)
-
+    all = pd.read_csv('loan_2010_12_with_dummy.csv', encoding='latin-1', dtype='float')
+    all.to_csv('loan_2010_12_with_dummy_clean.csv', index=False)
 
 def main():
     #clean data
-    #src = 'loan.csv'
-    #cleanData(src)
+    src = 'loan.csv'
+    cleanData(src)
     src = 'loan_clean.csv'
     selectData(src)
+    createDummyVar()
     formatData()
-    #createDummyVar()
-    # #statistics()
-    #combineData()
-    #splitData()
+
 
 if __name__ == '__main__':
     main()
